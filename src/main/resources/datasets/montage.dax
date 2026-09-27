@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<adag xmlns="http://pegasus.isi.edu/schema/DAX" version="3.3" name="Montage-sample">
+  <job id="montage-0" name="mProjectPP" runtime="8">
+    <uses file="input.fits" link="input" size="50000000"/>
+    <uses file="projected.fits" link="output" size="30000000"/>
+  </job>
+  <job id="montage-1" name="mDiffFit" runtime="12">
+    <uses file="projected.fits" link="input" size="30000000"/>
+    <uses file="difference.fits" link="output" size="25000000"/>
+  </job>
+  <job id="montage-2" name="mBackground" runtime="10">
+    <uses file="difference.fits" link="input" size="25000000"/>
+    <uses file="background.fits" link="output" size="20000000"/>
+  </job>
+  <job id="montage-3" name="mAdd" runtime="15">
+    <uses file="background.fits" link="input" size="20000000"/>
+    <uses file="mosaic.fits" link="output" size="10000000"/>
+  </job>
+  <child ref="montage-1"><parent ref="montage-0"/></child>
+  <child ref="montage-2"><parent ref="montage-1"/></child>
+  <child ref="montage-3"><parent ref="montage-2"/></child>
+</adag>

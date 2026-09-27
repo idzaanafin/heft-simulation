@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<adag xmlns="http://pegasus.isi.edu/schema/DAX" version="3.3" name="CyberShake-sample">
+  <job id="cyber-0" name="Extract" runtime="18">
+    <uses file="rupture.xml" link="input" size="70000000"/>
+    <uses file="rupture-grid.dat" link="output" size="50000000"/>
+  </job>
+  <job id="cyber-1" name="Seismogram" runtime="25">
+    <uses file="rupture-grid.dat" link="input" size="50000000"/>
+    <uses file="seismogram.dat" link="output" size="40000000"/>
+  </job>
+  <job id="cyber-2" name="PeakMotion" runtime="14">
+    <uses file="seismogram.dat" link="input" size="40000000"/>
+    <uses file="peak-motion.dat" link="output" size="20000000"/>
+  </job>
+  <job id="cyber-3" name="RiskAnalysis" runtime="20">
+    <uses file="peak-motion.dat" link="input" size="20000000"/>
+    <uses file="risk.json" link="output" size="10000000"/>
+  </job>
+  <job id="cyber-4" name="Report" runtime="6">
+    <uses file="risk.json" link="input" size="10000000"/>
+    <uses file="report.pdf" link="output" size="5000000"/>
+  </job>
+  <child ref="cyber-1"><parent ref="cyber-0"/></child>
+  <child ref="cyber-2"><parent ref="cyber-1"/></child>
+  <child ref="cyber-3"><parent ref="cyber-2"/></child>
+  <child ref="cyber-4"><parent ref="cyber-3"/></child>
+</adag>
