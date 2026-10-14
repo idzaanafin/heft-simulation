@@ -17,13 +17,14 @@ import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Main {
 
     private static final long DAG_SEED = 2026L;
     private static final int DEFAULT_TASK_COUNT = 100;
-    private static final int DEFAULT_VM_COUNT = 10;
+    private static final int DEFAULT_VM_COUNT = 80; // 80 VM (10 VM per host untuk 8 physical hosts) sesuai revisi dosen
 
     /*
      * Number of top-priority tasks
@@ -57,15 +58,16 @@ public class Main {
     ) {
         if (!workload.equals("synthetic")
             && !workload.equals("montage")
-            && !workload.equals("cybershake")) {
+            && !workload.equals("cybershake")
+            && !workload.equals("sipht")) {
             throw new IllegalArgumentException(
-                "Workload harus synthetic, montage, atau cybershake."
+                "Workload harus synthetic, montage, cybershake, atau sipht."
             );
         }
 
-        if (taskCount < 2 || vmCount < 1 || vmCount > 40) {
+        if (taskCount < 2 || vmCount < 1 || vmCount > 160) {
             throw new IllegalArgumentException(
-                "Task minimal 2 dan jumlah VM harus berada pada rentang 1-40."
+                "Task minimal 2 dan jumlah VM harus berada pada rentang 1-160."
             );
         }
     }
@@ -78,13 +80,32 @@ public class Main {
             return WorkflowDAG.generateSynthetic(taskCount, DAG_SEED);
         }
 
-        String fileName = workload.equals("montage")
-            ? "montage.dax"
-            : "cybershake.dax";
+        Path datasetsDir = Path.of("src", "main", "resources", "datasets");
+        String base = workload.toLowerCase();
 
-        return WorkflowDatasetLoader.loadDax(
-            Path.of("src", "main", "resources", "datasets", fileName)
-        );
+        // 1. Cek kecocokan persis dengan taskCount, misal sipht_200.dax atau sipht_100.dax
+        Path targetPath = datasetsDir.resolve(base + "_" + taskCount + ".dax");
+
+        // 2. Jika tidak ada, cek file dasar workload.dax
+        if (!Files.exists(targetPath)) {
+            targetPath = datasetsDir.resolve(base + ".dax");
+        }
+
+        // 3. Fallback jika masih belum ada
+        if (!Files.exists(targetPath)) {
+            targetPath = datasetsDir.resolve(base + "_100.dax");
+        }
+
+        if (!Files.exists(targetPath)) {
+            throw new IllegalArgumentException(
+                "Berkas dataset DAX untuk workload '" + workload + "' tidak ditemukan di " + datasetsDir
+            );
+        }
+
+        System.out.printf("Memuat dataset DAX: %s (%s, target tasks=%d)%n",
+            targetPath.getFileName(), workload, taskCount);
+
+        return WorkflowDatasetLoader.loadDax(targetPath);
     }
 
     public static void main(String[] args) throws Exception {
@@ -113,9 +134,13 @@ public class Main {
 
         /*
          * =====================================================
-         * DATACENTER
+         * DATACENTER & HOST ALLOCATION POLICY
          * =====================================================
+         * Tentukan alokasi merata VM per host (8 host fisik).
+         * Untuk 80 VM -> tepat 10 VM per host.
          */
+
+        int maxVmsPerHost = Math.max(1, (int) Math.ceil((double) vmCount / 8.0));
 
         List<Datacenter> datacenters =
             new ArrayList<>();
@@ -123,14 +148,16 @@ public class Main {
         datacenters.add(
             createDatacenter(
                 "Datacenter_0",
-                0
+                0,
+                maxVmsPerHost
             )
         );
 
         datacenters.add(
             createDatacenter(
                 "Datacenter_1",
-                1
+                1,
+                maxVmsPerHost
             )
         );
 
@@ -443,6 +470,14 @@ public class Main {
 
         /*
          * =====================================================
+         * PHYSICAL HOST & VM ALLOCATION SUMMARY
+         * =====================================================
+         */
+
+        printHostVmDistribution(datacenters, vmCount);
+
+        /*
+         * =====================================================
          * FINISH
          * =====================================================
          */
@@ -656,7 +691,8 @@ public class Main {
 
     private static Datacenter createDatacenter(
         String name,
-        int datacenterIndex
+        int datacenterIndex,
+        int maxVmsPerHost
     ) throws Exception {
 
         List<Host> hostList =
@@ -667,9 +703,9 @@ public class Main {
             hostList.add(
                 createHost(
                     0,
-                    8,
+                    24,
                     3500,
-                    16384,
+                    65536,
                     100000,
                     HOST_STORAGE
                 )
@@ -678,9 +714,9 @@ public class Main {
             hostList.add(
                 createHost(
                     1,
-                    8,
+                    24,
                     3800,
-                    16384,
+                    65536,
                     100000,
                     HOST_STORAGE
                 )
@@ -689,9 +725,9 @@ public class Main {
             hostList.add(
                 createHost(
                     2,
-                    12,
+                    24,
                     4200,
-                    32768,
+                    65536,
                     120000,
                     HOST_STORAGE
                 )
@@ -700,9 +736,9 @@ public class Main {
             hostList.add(
                 createHost(
                     3,
-                    12,
+                    24,
                     4500,
-                    32768,
+                    65536,
                     120000,
                     HOST_STORAGE
                 )
@@ -713,9 +749,9 @@ public class Main {
             hostList.add(
                 createHost(
                     4,
-                    8,
+                    24,
                     3600,
-                    16384,
+                    98304,
                     100000,
                     HOST_STORAGE
                 )
@@ -724,9 +760,9 @@ public class Main {
             hostList.add(
                 createHost(
                     5,
-                    8,
+                    24,
                     4000,
-                    16384,
+                    98304,
                     100000,
                     HOST_STORAGE
                 )
@@ -735,9 +771,9 @@ public class Main {
             hostList.add(
                 createHost(
                     6,
-                    12,
+                    24,
                     4400,
-                    32768,
+                    98304,
                     120000,
                     HOST_STORAGE
                 )
@@ -746,9 +782,9 @@ public class Main {
             hostList.add(
                 createHost(
                     7,
-                    16,
+                    24,
                     5000,
-                    32768,
+                    98304,
                     160000,
                     HOST_STORAGE
                 )
@@ -795,8 +831,9 @@ public class Main {
         return new Datacenter(
             name,
             characteristics,
-            new VmAllocationPolicySimple(
-                hostList
+            new VmAllocationPolicyUniform(
+                hostList,
+                maxVmsPerHost
             ),
             new ArrayList<Storage>(),
             0
@@ -954,76 +991,116 @@ public class Main {
         );
 
         System.out.println(
-            "Datacenter_0:"
+            "Datacenter_0 (4 Hosts, 64 GB RAM/Host):"
         );
 
         printHost(
             0,
-            8,
-            28000,
-            16384,
+            24,
+            84000,
+            65536,
             100000
         );
 
         printHost(
             1,
-            8,
-            30400,
-            16384,
+            24,
+            91200,
+            65536,
             100000
         );
 
         printHost(
             2,
-            12,
-            50400,
-            32768,
+            24,
+            100800,
+            65536,
             120000
         );
 
         printHost(
             3,
-            12,
-            54000,
-            32768,
+            24,
+            108000,
+            65536,
             120000
         );
 
         System.out.println(
-            "Datacenter_1:"
+            "Datacenter_1 (4 Hosts, 96 GB RAM/Host):"
         );
 
         printHost(
             4,
-            8,
-            28800,
-            16384,
+            24,
+            86400,
+            98304,
             100000
         );
 
         printHost(
             5,
-            8,
-            32000,
-            16384,
+            24,
+            96000,
+            98304,
             100000
         );
 
         printHost(
             6,
-            12,
-            52800,
-            32768,
+            24,
+            105600,
+            98304,
             120000
         );
 
         printHost(
             7,
-            16,
-            80000,
-            32768,
+            24,
+            120000,
+            98304,
             160000
         );
+    }
+
+    private static void printHostVmDistribution(
+        List<Datacenter> datacenters,
+        int vmCount
+    ) {
+        System.out.println();
+        System.out.println("=================================================");
+        System.out.println("   PHYSICAL HOST & VM ALLOCATION SUMMARY");
+        System.out.println("=================================================");
+        int totalAllocated = 0;
+        for (Datacenter dc : datacenters) {
+            System.out.println(dc.getName() + ":");
+            for (Host host : dc.<Host>getHostList()) {
+                int count = host.getVmList().size();
+                totalAllocated += count;
+                List<Integer> vmIds = new ArrayList<>();
+                for (Vm vm : host.<Vm>getVmList()) {
+                    vmIds.add(vm.getId());
+                }
+                String idRange = vmIds.isEmpty() ? "None"
+                    : (vmIds.size() == 1 ? "VM #" + vmIds.get(0)
+                    : "VM #" + vmIds.get(0) + " to #" + vmIds.get(vmIds.size() - 1));
+                System.out.printf(
+                    "  Host #%d | PEs=%d | RAM=%d MB -> %d VMs (%s)%n",
+                    host.getId(),
+                    host.getNumberOfPes(),
+                    host.getRam(),
+                    count,
+                    idRange
+                );
+            }
+        }
+        System.out.println("-------------------------------------------------");
+        System.out.printf(
+            "Total: 8 Physical Hosts, %d VMs Allocated (Target: %d VMs)%n",
+            totalAllocated,
+            vmCount
+        );
+        System.out.println("=================================================");
     }
 
     private static void printHost(

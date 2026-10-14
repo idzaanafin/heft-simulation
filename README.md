@@ -1,5 +1,8 @@
 # HEFT Cloud Workflow Simulation
 
+> [!NOTE]
+> **Dokumen Panduan & Hasil Analisis Lengkap**: Silakan buka berkas **[README_ANALISIS_DAN_TUTORIAL.md](file:///c:/Users/rayha/OneDrive/Documents/SEMESTER%205/1.%20Strategi%20Optimasi%20Komputasi%20Awan%20SOKA/1.%20Tugas/TUGAS%20HEFT/heft-simulation-master/README_ANALISIS_DAN_TUTORIAL.md)** untuk membaca analisis korelasi seluruh PDF tugas, penjelasan mendalam arsitektur dan algoritma HEFT, serta hasil uji coba live-run.
+
 Simulator workflow cloud berbasis **CloudSim 7.0.1** untuk menguji algoritma **Heterogeneous Earliest Finish Time (HEFT)** pada lingkungan cloud yang memiliki resource heterogen.
 
 Project ini merupakan implementasi untuk:
