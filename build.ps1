@@ -1,4 +1,8 @@
-$javac21 = "c:\Users\rayha\.antigravity-ide\extensions\redhat.java-1.56.0-win32-x64\jre\21.0.12.1-win32-x86_64\bin\javac.exe"
+$javac21 = if ($env:JAVA_HOME) {
+    Join-Path $env:JAVA_HOME "bin\javac.exe"
+} else {
+    (Get-Command javac -ErrorAction Stop).Source
+}
 $cp = "$env:USERPROFILE\.m2\repository\org\cloudbus\cloudsim\cloudsim\7.0.1\cloudsim-7.0.1.jar"
 $outDir = "target\classes"
 

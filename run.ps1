@@ -4,7 +4,11 @@ param(
     [int]$VMs = 80
 )
 
-$java21 = "c:\Users\rayha\.antigravity-ide\extensions\redhat.java-1.56.0-win32-x64\jre\21.0.12.1-win32-x86_64\bin\java.exe"
+$java21 = if ($env:JAVA_HOME) {
+    Join-Path $env:JAVA_HOME "bin\java.exe"
+} else {
+    (Get-Command java -ErrorAction Stop).Source
+}
 $cp = "target\classes;$env:USERPROFILE\.m2\repository\org\cloudbus\cloudsim\cloudsim\7.0.1\cloudsim-7.0.1.jar"
 
 & $java21 -cp $cp Main $Workload $Tasks $VMs

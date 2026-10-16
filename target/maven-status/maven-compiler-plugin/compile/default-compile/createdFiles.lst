@@ -1,8 +1,9 @@
+WorkflowTask.class
+WorkflowDatasetLoader.class
 HEFTScheduler$TaskInterval.class
 Main.class
 WorkflowBroker.class
-WorkflowTask.class
+VmAllocationPolicyUniform.class
 HEFTScheduler.class
 WorkflowDAG.class
 SimulationResult.class
-WorkflowDatasetLoader.class
